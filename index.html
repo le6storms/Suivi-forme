@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="robots" content="noindex,nofollow">
+<title>Suivi Forme</title>
+<style>
+:root{--bg:#0f1115;--card:#171a21;--card2:#1f232c;--line:#2a2f3a;--txt:#e8eaef;--mut:#8b93a3;--acc:#4f9dff;--ok:#2fbf71;--warn:#f0a030;--bad:#e5484d;--part:#3a4a66}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{opacity:.35;cursor:default}
+header{position:sticky;top:0;z-index:5;background:rgba(15,17,21,.96);backdrop-filter:blur(8px);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line)}
+.top{display:flex;justify-content:space-between;align-items:baseline}
+.top b{font-size:18px;letter-spacing:.3px}
+#hdrDay{color:var(--acc);font-weight:600}
+.gauge{height:6px;background:var(--card2);border-radius:9px;margin:8px 0;overflow:hidden}
+#gaugeFill{height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--ok));border-radius:9px;transition:width .4s}
+#hdrStats{display:flex;justify-content:space-between;font-size:13px;color:var(--mut)}
+#hdrStats b{color:var(--txt)}
+main{padding:12px;max-width:560px;margin:0 auto}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
+.card h3{font-size:15px;margin:0}
+.muted{color:var(--mut);font-size:13px}
+.row{margin-bottom:14px}.row:last-child{margin-bottom:0}
+.lbl{font-weight:600;margin-bottom:6px}
+.seg{display:flex;gap:8px}
+.opt{flex:1;min-height:48px;border:1px solid var(--line);background:var(--card2);border-radius:12px;font-size:15px;padding:6px}
+.opt.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+.opt.on.good{background:var(--ok);border-color:var(--ok)}
+.opt.on.warnc{background:var(--warn);border-color:var(--warn);color:#1a1200}
+.opt.on.badc{background:var(--bad);border-color:var(--bad)}
+.stepper{display:flex;align-items:center;gap:10px;margin-top:8px}
+.stepper button{min-width:56px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card2);font-size:18px;font-weight:600}
+.stepper .val{flex:1;text-align:center;font-size:22px;font-weight:700}
+.stepper .val small{font-size:13px;color:var(--mut);font-weight:400}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:42px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card2);font-size:14px}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+.bar{height:8px;background:var(--card2);border-radius:9px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--acc)}
+.scale{display:flex;gap:6px}.scale .opt{font-size:18px;min-height:46px}
+input[type=text],input[type=date],textarea{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:12px;font:inherit;font-size:16px}
+textarea{min-height:80px;resize:vertical}
+.datenav{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.datenav button{width:52px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:18px}
+.datenav div{flex:1;text-align:center}
+.datenav b{display:block;font-size:18px}
+.datenav small{color:var(--mut)}
+.coach{border-color:#2d3f5e;background:linear-gradient(180deg,#18202e,#171a21)}
+.coach-h{font-weight:700;margin-bottom:6px}
+.cm{margin:8px 0 0;padding:10px 12px;border-radius:12px;background:var(--card2);border-left:4px solid var(--acc)}
+.cm.warn{border-left-color:var(--warn)}.cm.bad{border-left-color:var(--bad)}.cm.win{border-left-color:var(--ok)}
+.saved{text-align:center;color:var(--mut);font-size:13px;margin:4px 0 12px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.dow{text-align:center;font-size:12px;color:var(--mut);padding-bottom:2px}
+.cd{aspect-ratio:1;border-radius:10px;border:1px solid var(--line);background:var(--card2);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;line-height:1.1}
+.cd b{font-size:15px}.cd small{font-size:9px;color:var(--mut)}
+.cd.ok{background:var(--ok);border-color:var(--ok)}.cd.warn{background:var(--warn);border-color:var(--warn);color:#1a1200}.cd.bad{background:var(--bad);border-color:var(--bad)}.cd.part{background:var(--part)}
+.cd.ok small,.cd.bad small,.cd.part small{color:rgba(255,255,255,.75)}.cd.warn small{color:rgba(26,18,0,.7)}
+.cd.today{outline:2px solid var(--acc);outline-offset:1px}
+.cd.fut{opacity:.35}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mut);margin-bottom:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.counts{display:flex;justify-content:space-around;margin-top:12px;text-align:center}
+.counts b{display:block;font-size:22px}
+.ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.chart{width:100%;height:auto;display:block}
+.big{width:100%;min-height:54px;border-radius:14px;border:0;background:var(--acc);color:#fff;font-weight:700;font-size:16px}
+.btn{width:100%;min-height:50px;border-radius:12px;border:1px solid var(--line);background:var(--card2);font-size:15px;margin-top:8px}
+.btn.danger{color:var(--bad);border-color:#4a2427}
+#bilanTxt{margin-top:10px;min-height:160px;font-size:13px}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;background:rgba(15,17,21,.97);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;padding:10px 0 12px;color:var(--mut);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button span{font-size:22px}
+nav button.on{color:var(--acc)}
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#2b3240;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px}
+.lock.on{display:flex}
+.lockbox{width:100%;max-width:320px;text-align:center}
+.lockbox h1{font-size:22px;margin:8px 0 4px}
+.logo{width:64px;height:64px;margin:0 auto;border-radius:18px;background:linear-gradient(135deg,var(--acc),var(--ok));display:flex;align-items:center;justify-content:center;font-size:30px}
+#lockMsg{color:var(--mut);min-height:22px}
+.dots{display:flex;justify-content:center;gap:14px;margin:18px 0 22px}
+.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--mut)}
+.dots i.f{background:var(--acc);border-color:var(--acc)}
+.dots.shake{animation:sh .35s}
+@keyframes sh{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pad button{height:64px;border-radius:16px;border:1px solid var(--line);background:var(--card);font-size:24px}
+.pad button.sm{font-size:13px;color:var(--mut)}
+</style>
+</head>
+<body>
+
+<div id="lock" class="lock">
+  <div class="lockbox">
+    <div class="logo">◎</div>
+    <h1>Suivi Forme</h1>
+    <div id="lockMsg">Entre ton code</div>
+    <div class="dots" id="dots"><i></i><i></i><i></i><i></i></div>
+    <div class="pad" id="pad"></div>
+  </div>
+</div>
+
+<header>
+  <div class="top"><b>Suivi Forme</b><span id="hdrDay"></span></div>
+  <div class="gauge"><div id="gaugeFill"></div></div>
+  <div id="hdrStats"></div>
+</header>
+
+<main>
+  <section id="tab-today" class="tab on"></section>
+  <section id="tab-cal" class="tab"></section>
+  <section id="tab-stats" class="tab"></section>
+  <section id="tab-set" class="tab"></section>
+</main>
+
+<nav>
+  <button class="on" data-act="tab" data-tab="today"><span>✎</span>Aujourd'hui</button>
+  <button data-act="tab" data-tab="cal"><span>▦</span>Calendrier</button>
+  <button data-act="tab" data-tab="stats"><span>▤</span>Stats</button>
+  <button data-act="tab" data-tab="set"><span>⚙</span>Réglages</button>
+</nav>
+
+<div id="toast"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+'use strict';
+
+/* ================= CONFIGURATION ================= */
+const LS_KEY = 'suiviForme.v1';
+const PROGRAM_DAYS = 90;
+const DEFAULT_START = '2026-11-23';
+
+// Règles du coach : modifie les seuils et messages ici
+const COACH = {
+  eauMin: 1.5,          // L/jour
+  eauJours: 2,
+  sommeilMin: 6,        // heures
+  sommeilNuits: 3,
+  sportJours: 4,
+  intimeJours: 5,
+  finProgramme: 21,     // dernières semaines
+  paliers: {
+    7:  "7 jours sans alcool 💪 Ton sommeil est déjà plus profond et ta peau plus nette.",
+    15: "15 jours sans alcool ! Ton foie commence à récupérer, tu dois sentir plus d'énergie au réveil.",
+    30: "1 mois sans alcool 🎉 Tension en baisse, concentration en hausse, foie qui dégraisse.",
+    60: "60 jours sans alcool ! Humeur plus stable, idées plus claires. Tes nouveaux spermatozoïdes se forment sans alcool.",
+    90: "90 jours sans alcool 🏆 Un cycle complet de spermatozoïdes renouvelé. Objectif atteint, champion."
+  }
+};
+
+const SUBST = [
+  ['alcool', '🍺 Alcool', 'verres'],
+  ['cigarette', '🚬 Cigarette', 'cigarettes'],
+  ['chicha', '💨 Chicha', 'séances']
+];
+const BOISSONS = ['Citron', 'Gingembre', 'Thé vert', 'Bissap', 'Coco', 'Jus frais'];
+const SPORTS = ['Aucun', 'Marche', 'Course', 'Muscu', 'Foot', 'Vélo', 'Autre'];
+const REPAS = [['matin', 'Matin'], ['midi', 'Midi'], ['soir', 'Soir']];
+const HUMEURS = ['😞', '😕', '😐', '🙂', '😄'];
+
+/* ================= OUTILS DATES ================= */
+const pad2 = n => String(n).padStart(2, '0');
+const keyOf = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+const parseKey = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (k, n) => { const d = parseKey(k); d.setDate(d.getDate() + n); return keyOf(d); };
+const diffDays = (a, b) => Math.round((parseKey(b) - parseKey(a)) / 864e5);
+const todayKey = () => keyOf(new Date());
+const JOURS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+const MOIS = ['janv', 'févr', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc'];
+const fmtShort = k => { const d = parseKey(k); return JOURS[d.getDay()] + ' ' + pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1); };
+const fmtNum = v => String(Math.round((+v || 0) * 100) / 100).replace('.', ',');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = s => document.querySelector(s);
+
+/* ================= DONNÉES ================= */
+function defaultDB() { return { version: 1, settings: { start: DEFAULT_START, pinHash: null }, days: {} }; }
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) { const o = JSON.parse(raw); if (o && o.days && o.settings) return o; }
+  } catch (e) {}
+  return defaultDB();
+}
+let DB = loadDB();
+function saveDB() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(DB)); }
+  catch (e) { toast('⚠️ Sauvegarde impossible sur cet appareil'); }
+}
+function blankDay() {
+  return {
+    alcool: { v: null, q: 0 }, cigarette: { v: null, q: 0 }, chicha: { v: null, q: 0 },
+    eau: 0, boissons: [], cafe: 0, sucre: null,
+    sport: { type: '', min: 0 }, sommeil: 0,
+    repas: { matin: '', midi: '', soir: '' }, repasNote: '',
+    intime: null, humeur: 0, energie: 0, note: ''
+  };
+}
+function fill(d) { const b = blankDay(); for (const k in b) if (d[k] === undefined) d[k] = b[k]; return d; }
+const getDay = (days, k) => days[k] ? fill(days[k]) : null;
+
+let cur = todayKey();
+function D() { if (!DB.days[cur]) DB.days[cur] = blankDay(); return fill(DB.days[cur]); }
+
+function getP(o, p) { return p.split('.').reduce((a, k) => a == null ? a : a[k], o); }
+function setP(o, p, v) { const ks = p.split('.'); const last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = v; }
+function parseV(s) { if (s === 'true') return true; if (s === 'false') return false; if (s !== '' && !isNaN(s)) return +s; return s; }
+
+/* ================= ÉTATS & SÉRIES ================= */
+// true = journée propre, false = écart, null = pas renseigné
+const cleanState = d => {
+  const v = SUBST.map(([k]) => d[k].v);
+  if (v.includes(true)) return false;
+  if (v.every(x => x === false)) return true;
+  return null;
+};
+const alcState = d => d.alcool.v === null ? null : !d.alcool.v;
+
+function status(d) {
+  if (!d) return '';
+  const c = cleanState(d);
+  if (c === false) return 'bad';
+  const minor = d.eau < COACH.eauMin || d.sucre === true || d.cafe > 2 ||
+    (d.sommeil > 0 && d.sommeil < COACH.sommeilMin) || Object.values(d.repas).includes('ecart');
+  if (c === true) return minor ? 'warn' : 'ok';
+  const touched = d.eau > 0 || d.sommeil > 0 || d.sport.min > 0 || SUBST.some(([k]) => d[k].v !== null);
+  return touched ? 'part' : '';
+}
+
+function streakIn(days, start, today, stateFn) {
+  const td = getDay(days, today);
+  const ts = td ? stateFn(td) : null;
+  if (ts === false) return 0;
+  let k = ts === true ? today : addDays(today, -1), n = 0;
+  while (k >= start) {
+    const d = getDay(days, k);
+    if (!d || stateFn(d) !== true) break;
+    n++; k = addDays(k, -1);
+  }
+  return n;
+}
+
+/* ================= COACH (fonction isolée) =================
+   Pour brancher l'IA plus tard : remplacer le corps par un fetch()
+   vers ton Cloudflare Worker, qui renvoie [{type, text}].
+   La fonction peut devenir async : l'affichage gère déjà les Promises. */
+function getCoachMessage(data) {
+  const { today, start, dayIndex, days } = data;
+  const g = k => getDay(days, k);
+  const msgs = [];
+
+  if (dayIndex < 1) return [{ type: 'info', text: `Le programme commence le ${fmtShort(start)}. Prépare-toi 💪` }];
+
+  const td = g(today);
+  if (td && cleanState(td) === false)
+    msgs.push({ type: 'bad', text: "Un écart aujourd'hui. Ce n'est pas un échec : note ce qui l'a déclenché, et demain on repart. Les jours tenus restent acquis." });
+
+  // Eau
+  const eauDays = [];
+  for (let i = 1; i <= COACH.eauJours; i++) eauDays.push(g(addDays(today, -i)));
+  if (eauDays.every(d => d && d.eau < COACH.eauMin)) {
+    const tot = eauDays.reduce((a, d) => a + d.eau, 0);
+    msgs.push({ type: 'warn', text: `Seulement ${fmtNum(tot)} L d'eau sur les ${COACH.eauJours} derniers jours. Comment tu te sens ? Vise 2 L aujourd'hui : un grand verre au réveil, un à chaque repas.` });
+  }
+
+  // Sommeil
+  const off = td && td.sommeil > 0 ? 0 : 1;
+  const nuits = [];
+  for (let i = 0; i < COACH.sommeilNuits; i++) nuits.push(g(addDays(today, -(i + off))));
+  if (nuits.every(d => d && d.sommeil > 0 && d.sommeil < COACH.sommeilMin))
+    msgs.push({ type: 'warn', text: `${COACH.sommeilNuits} nuits sous ${COACH.sommeilMin} h : ton corps récupère mal (et ta testostérone aussi). Ce soir, écrans coupés 30 min avant, objectif 7 h.` });
+
+  // Sport
+  if (dayIndex >= COACH.sportJours) {
+    const last = [];
+    for (let i = 0; i < COACH.sportJours; i++) last.push(g(addDays(today, -i)));
+    if (last.some(Boolean) && !last.some(d => d && d.sport.min > 0))
+      msgs.push({ type: 'warn', text: `${COACH.sportJours} jours sans sport. Même 30 min de marche rapide aujourd'hui, ça compte !` });
+  }
+
+  // Rythme intime (discret)
+  let lastI = null;
+  for (let k = today; k >= start; k = addDays(k, -1)) { const d = g(k); if (d && d.intime === true) { lastI = k; break; } }
+  const since = lastI ? diffDays(lastI, today) : diffDays(start, today);
+  if (since > COACH.intimeJours)
+    msgs.push({ type: 'info', text: `Rappel discret 🔒 : ${since} jours depuis la dernière fois. Le bon rythme, c'est tous les 2-3 jours.` });
+
+  // Paliers sans alcool
+  const a = streakIn(days, start, today, alcState);
+  if (COACH.paliers[a]) msgs.push({ type: 'win', text: COACH.paliers[a] });
+
+  // Dernière ligne droite
+  if (dayIndex > PROGRAM_DAYS - COACH.finProgramme && dayIndex <= PROGRAM_DAYS)
+    msgs.push({ type: 'info', text: `Dernière ligne droite (${PROGRAM_DAYS - dayIndex + 1} jours) : prends rendez-vous pour ton bilan médical (prise de sang, dépistage IST à deux) et garde le rythme tous les 2-3 jours.` });
+
+  if (!msgs.length) {
+    if (!td) msgs.push({ type: 'info', text: "Remplis ta journée, ça prend moins d'une minute." });
+    else {
+      const s = streakIn(days, start, today, cleanState);
+      msgs.push({ type: 'win', text: `Bonne trajectoire. Série en cours : ${s} jour${s > 1 ? 's' : ''} sans alcool, tabac ni chicha. Continue comme ça 💪` });
+    }
+  }
+  return msgs;
+}
+
+function renderCoach() {
+  const el = $('#coach'); if (!el) return;
+  const t = todayKey();
+  Promise.resolve(getCoachMessage({ today: t, start: DB.settings.start, dayIndex: diffDays(DB.settings.start, t) + 1, days: DB.days }))
+    .then(m => { el.innerHTML = '<div class="coach-h">🧠 Coach</div>' + m.map(x => `<p class="cm ${x.type}">${esc(x.text)}</p>`).join(''); })
+    .catch(() => { el.innerHTML = '<p class="muted">Coach indisponible.</p>'; });
+}
+
+/* ================= RENDU : EN-TÊTE ================= */
+function renderHeader() {
+  const t = todayKey(), st = DB.settings.start;
+  const idx = diffDays(st, t) + 1;
+  const c = Math.max(0, Math.min(PROGRAM_DAYS, idx));
+  $('#hdrDay').textContent = idx < 1 ? `Début dans ${1 - idx} j` : idx > PROGRAM_DAYS ? 'Terminé 🏆' : `J${idx} / ${PROGRAM_DAYS}`;
+  $('#gaugeFill').style.width = (c / PROGRAM_DAYS * 100) + '%';
+  const s = streakIn(DB.days, st, t, cleanState), a = streakIn(DB.days, st, t, alcState);
+  $('#hdrStats').innerHTML = `<span>🔥 Série <b>${s}</b> j</span><span>🍃 Sans alcool <b>${a}</b> j</span><span>⏳ Restants <b>${Math.max(0, PROGRAM_DAYS - c)}</b></span>`;
+}
+
+/* ================= RENDU : SAISIE ================= */
+const seg = (p, cur, opts) => `<div class="seg">${opts.map(([v, l, cls]) =>
+  `<button class="opt ${String(cur) === String(v) ? 'on ' + (cls || '') : ''}" data-act="set" data-p="${p}" data-v="${v}">${l}</button>`).join('')}</div>`;
+const stepper = (p, v, st, mn, mx, unit, lm = '−', lp = '+') =>
+  `<div class="stepper"><button data-act="step" data-p="${p}" data-v="${-st}" data-min="${mn}" data-max="${mx}">${lm}</button>` +
+  `<span class="val">${fmtNum(v)} <small>${unit}</small></span>` +
+  `<button data-act="step" data-p="${p}" data-v="${st}" data-min="${mn}" data-max="${mx}">${lp}</button></div>`;
+
+function renderToday() {
+  const t = todayKey(); if (cur > t) cur = t;
+  const d = DB.days[cur] ? fill(DB.days[cur]) : blankDay();
+  const idx = diffDays(DB.settings.start, cur) + 1;
+  let h = `<div class="datenav"><button data-act="nav" data-v="-1" aria-label="Jour précédent">◀</button>
+    <div><b>${cur === t ? "Aujourd'hui" : esc(fmtShort(cur))}</b><small>${idx >= 1 && idx <= PROGRAM_DAYS ? 'J' + idx + ' / ' + PROGRAM_DAYS : 'Hors programme'} · ${esc(fmtShort(cur))}</small></div>
+    <button data-act="nav" data-v="1" ${cur >= t ? 'disabled' : ''} aria-label="Jour suivant">▶</button></div>`;
+
+  if (cur === t) h += `<div id="coach" class="card coach"><div class="muted">…</div></div>`;
+
+  // Substances
+  h += `<div class="card"><h2>Les 3 zéros</h2>` + SUBST.map(([k, l, u]) =>
+    `<div class="row"><div class="lbl">${l}</div>${seg(k + '.v', d[k].v, [['false', 'Non ✓', 'good'], ['true', 'Oui', 'badc']])}` +
+    (d[k].v ? stepper(k + '.q', d[k].q, 1, 1, 99, u) : '') + `</div>`).join('') + `</div>`;
+
+  // Hydratation
+  h += `<div class="card"><h2>Hydratation</h2>
+    <div class="row"><div class="lbl">💧 Eau</div>${stepper('eau', d.eau, 0.5, 0, 10, 'L', '−0,5', '+0,5 L')}
+    <div class="bar"><i style="width:${Math.min(100, d.eau / 2 * 100)}%;background:${d.eau >= 2 ? 'var(--ok)' : 'var(--acc)'}"></i></div></div>
+    <div class="row"><div class="lbl">🥤 Boissons maison</div><div class="chips">${BOISSONS.map(b =>
+      `<button class="chip ${d.boissons.includes(b) ? 'on' : ''}" data-act="arr" data-p="boissons" data-v="${esc(b)}">${esc(b)}</button>`).join('')}</div></div>
+    <div class="row"><div class="lbl">☕ Café</div>${stepper('cafe', d.cafe, 1, 0, 10, d.cafe > 1 ? 'tasses' : 'tasse')}</div>
+    <div class="row"><div class="lbl">🍬 Sodas / sucreries</div>${seg('sucre', d.sucre, [['false', 'Non ✓', 'good'], ['true', 'Oui', 'warnc']])}</div></div>`;
+
+  // Corps
+  h += `<div class="card"><h2>Corps</h2>
+    <div class="row"><div class="lbl">😴 Sommeil (nuit dernière)</div>${stepper('sommeil', d.sommeil, 0.5, 0, 14, 'h')}</div>
+    <div class="row"><div class="lbl">🏃 Sport</div><div class="chips">${SPORTS.map(s =>
+      `<button class="chip ${d.sport.type === s ? 'on' : ''}" data-act="set" data-p="sport.type" data-v="${s}">${s}</button>`).join('')}</div>
+    ${d.sport.type && d.sport.type !== 'Aucun' ? stepper('sport.min', d.sport.min, 15, 0, 300, 'min') : ''}</div></div>`;
+
+  // Repas
+  h += `<div class="card"><h2>Repas</h2>` + REPAS.map(([k, l]) =>
+    `<div class="row"><div class="lbl">${l}</div>${seg('repas.' + k, d.repas[k], [['propre', 'Propre', 'good'], ['moyen', 'Moyen', 'warnc'], ['ecart', 'Écart', 'badc']])}</div>`).join('') +
+    `<div class="row"><input type="text" data-in="repasNote" placeholder="Note repas (ex. poisson + légumes)" value="${esc(d.repasNote)}"></div></div>`;
+
+  // Ressenti
+  h += `<div class="card"><h2>Ressenti</h2>
+    <div class="row"><div class="lbl">Humeur</div><div class="scale">${HUMEURS.map((e, i) =>
+      `<button class="opt ${d.humeur === i + 1 ? 'on' : ''}" data-act="set" data-p="humeur" data-v="${i + 1}">${e}</button>`).join('')}</div></div>
+    <div class="row"><div class="lbl">Énergie</div><div class="scale">${[1, 2, 3, 4, 5].map(i =>
+      `<button class="opt ${d.energie === i ? 'on' : ''}" data-act="set" data-p="energie" data-v="${i}">${i}</button>`).join('')}</div></div>
+    <div class="row"><div class="lbl">🔒 Intime</div>${seg('intime', d.intime, [['false', 'Non'], ['true', 'Oui']])}</div>
+    <div class="row"><div class="lbl">📝 Note libre</div><textarea data-in="note" placeholder="Comment s'est passée ta journée ?">${esc(d.note)}</textarea></div></div>
+    <div class="saved">✓ Enregistré automatiquement sur ce téléphone</div>`;
+
+  $('#tab-today').innerHTML = h;
+  renderCoach();
+}
+
+/* ================= RENDU : CALENDRIER ================= */
+function renderCal() {
+  const st = DB.settings.start, t = todayKey();
+  const off = (parseKey(st).getDay() + 6) % 7;
+  const cnt = { ok: 0, warn: 0, bad: 0 };
+  let g = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(x => `<div class="dow">${x}</div>`).join('') + '<div></div>'.repeat(off);
+  for (let i = 0; i < PROGRAM_DAYS; i++) {
+    const k = addDays(st, i), d = getDay(DB.days, k), s = status(d), fut = k > t, dd = parseKey(k);
+    if (cnt[s] !== undefined) cnt[s]++;
+    g += `<button class="cd ${s} ${fut ? 'fut' : ''} ${k === t ? 'today' : ''}" ${fut ? 'disabled' : ''} data-act="open" data-k="${k}">
+      <b>${dd.getDate()}</b><small>${dd.getDate() === 1 ? MOIS[dd.getMonth()] : 'J' + (i + 1)}</small></button>`;
+  }
+  $('#tab-cal').innerHTML = `<div class="card"><h2>Calendrier 90 jours</h2>
+    <div class="legend"><span><i style="background:var(--ok)"></i>Tenue</span><span><i style="background:var(--warn)"></i>Écarts mineurs</span><span><i style="background:var(--bad)"></i>Alcool/tabac/chicha</span><span><i style="background:var(--part)"></i>Incomplet</span></div>
+    <div class="cal">${g}</div>
+    <div class="counts"><div><b style="color:var(--ok)">${cnt.ok}</b><span class="muted">tenues</span></div><div><b style="color:var(--warn)">${cnt.warn}</b><span class="muted">mineurs</span></div><div><b style="color:var(--bad)">${cnt.bad}</b><span class="muted">écarts</span></div></div>
+    <p class="muted" style="margin:12px 0 0">Touche un jour pour le compléter ou le modifier.</p></div>`;
+}
+
+/* ================= RENDU : STATS ================= */
+function chart(title, vals, labels, max, target, unit, color) {
+  const W = 330, H = 110, n = vals.length, bw = W / n;
+  const valid = vals.filter(v => v != null && v > 0);
+  const avg = valid.length ? valid.reduce((a, b) => a + b, 0) / valid.length : 0;
+  let s = `<svg viewBox="0 0 ${W} ${H + 20}" class="chart" role="img" aria-label="${esc(title)}">`;
+  if (target) { const y = H - Math.min(target, max) / max * H; s += `<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="#8b93a3" stroke-dasharray="4 4"/>`; }
+  vals.forEach((v, i) => {
+    if (v != null && v > 0) { const h = Math.max(3, Math.min(v, max) / max * H); s += `<rect x="${i * bw + 3}" y="${H - h}" width="${bw - 6}" height="${h}" rx="3" fill="${color}"/>`; }
+    if ((n - 1 - i) % 2 === 0) s += `<text x="${i * bw + bw / 2}" y="${H + 15}" text-anchor="middle" font-size="10" fill="#8b93a3">${labels[i]}</text>`;
+  });
+  return `<div class="card"><div class="ch"><h3>${title}</h3><span class="muted">moy. ${fmtNum(Math.round(avg * 10) / 10)} ${unit}</span></div>${s}</div>`;
+}
+
+function renderStats() {
+  const t = todayKey(), N = 14, keys = [];
+  for (let i = N - 1; i >= 0; i--) keys.push(addDays(t, -i));
+  const get = f => keys.map(k => { const d = getDay(DB.days, k); return d ? f(d) : null; });
+  const lab = keys.map(k => parseKey(k).getDate());
+  $('#tab-stats').innerHTML = `<div class="card"><h2>Bilan IA</h2>
+      <p class="muted" style="margin-top:0">Génère le résumé des 7 derniers jours, puis colle-le dans Claude pour une analyse personnalisée.</p>
+      <button class="big" data-act="copy">📋 Copier mon bilan</button>
+      <textarea id="bilanTxt" readonly hidden></textarea></div>
+    <p class="muted" style="margin:0 4px 8px">14 derniers jours · ligne pointillée = objectif</p>` +
+    chart('💧 Eau', get(d => d.eau), lab, 3, 2, 'L', '#4f9dff') +
+    chart('😴 Sommeil', get(d => d.sommeil), lab, 10, 7, 'h', '#8e7cff') +
+    chart('🏃 Sport', get(d => d.sport.min), lab, 120, 30, 'min', '#2fbf71') +
+    chart('🙂 Humeur', get(d => d.humeur), lab, 5, 0, '/5', '#f0a030');
+}
+
+/* ================= BILAN HEBDO ================= */
+function buildBilan() {
+  const t = todayKey(), st = DB.settings.start, keys = [];
+  for (let i = 6; i >= 0; i--) { const k = addDays(t, -i); if (k >= st) keys.push(k); }
+  if (!keys.length) keys.push(t);
+  const ds = keys.map(k => [k, getDay(DB.days, k)]).filter(x => x[1]);
+  const avg = a => a.length ? fmtNum(Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10) : '–';
+  const L = [];
+  L.push(`BILAN SUIVI FORME — du ${fmtShort(keys[0])} au ${fmtShort(t)} (J${diffDays(st, keys[0]) + 1} à J${diffDays(st, t) + 1} / ${PROGRAM_DAYS})`);
+  L.push(`Programme : 90 jours sans alcool, cigarette ni chicha ; objectif forme et fertilité.`);
+  L.push(`Série en cours sans alcool/tabac/chicha : ${streakIn(DB.days, st, t, cleanState)} j · sans alcool : ${streakIn(DB.days, st, t, alcState)} j`);
+  L.push(`Jours renseignés : ${ds.length}/${keys.length}`);
+  SUBST.forEach(([k, l, u]) => {
+    const yes = ds.filter(([, d]) => d[k].v === true);
+    L.push(`${l.replace(/^\S+\s/, '')} : ${yes.length ? yes.length + ' jour(s), ' + yes.reduce((a, [, d]) => a + d[k].q, 0) + ' ' + u : 'aucun'}`);
+  });
+  L.push(`Eau : moyenne ${avg(ds.map(([, d]) => d.eau))} L/j`);
+  L.push(`Sommeil : moyenne ${avg(ds.filter(([, d]) => d.sommeil > 0).map(([, d]) => d.sommeil))} h`);
+  const sp = ds.filter(([, d]) => d.sport.min > 0);
+  L.push(`Sport : ${sp.length} séance(s), ${sp.reduce((a, [, d]) => a + d.sport.min, 0)} min au total (${[...new Set(sp.map(([, d]) => d.sport.type))].join(', ') || '–'})`);
+  L.push(`Café : moyenne ${avg(ds.map(([, d]) => d.cafe))} tasse(s)/j · sodas/sucreries : ${ds.filter(([, d]) => d.sucre).length} jour(s)`);
+  const rp = { propre: 0, moyen: 0, ecart: 0 };
+  ds.forEach(([, d]) => Object.values(d.repas).forEach(v => { if (rp[v] !== undefined) rp[v]++; }));
+  L.push(`Repas : ${rp.propre} propres, ${rp.moyen} moyens, ${rp.ecart} écarts`);
+  L.push(`Éjaculation : ${ds.filter(([, d]) => d.intime).length} fois`);
+  L.push(`Humeur moyenne ${avg(ds.filter(([, d]) => d.humeur).map(([, d]) => d.humeur))}/5 · énergie ${avg(ds.filter(([, d]) => d.energie).map(([, d]) => d.energie))}/5`);
+  L.push('', 'DÉTAIL PAR JOUR');
+  keys.forEach(k => {
+    const d = getDay(DB.days, k);
+    if (!d) { L.push(`- ${fmtShort(k)} : non renseigné`); return; }
+    const p = [];
+    SUBST.forEach(([s]) => { if (d[s].v === true) p.push(`${s} OUI (${d[s].q})`); });
+    if (cleanState(d) === true) p.push('0 alcool/tabac/chicha');
+    p.push(`eau ${fmtNum(d.eau)} L`);
+    if (d.boissons.length) p.push(d.boissons.join('/'));
+    if (d.cafe) p.push(`café ${d.cafe}`);
+    if (d.sucre) p.push('sucreries');
+    if (d.sommeil) p.push(`sommeil ${fmtNum(d.sommeil)} h`);
+    if (d.sport.min) p.push(`${d.sport.type} ${d.sport.min} min`);
+    const r = REPAS.map(([x]) => d.repas[x] || '?').join('/');
+    if (r !== '?/?/?') p.push(`repas ${r}`);
+    if (d.repasNote) p.push(`(${d.repasNote})`);
+    if (d.intime) p.push('éjac.');
+    if (d.humeur) p.push(`humeur ${d.humeur}/5`);
+    if (d.energie) p.push(`énergie ${d.energie}/5`);
+    if (d.note) p.push(`note : « ${d.note} »`);
+    L.push(`- ${fmtShort(k)} (J${diffDays(st, k) + 1}) : ${p.join(' · ')}`);
+  });
+  L.push('', 'Peux-tu analyser ma semaine (points forts, points faibles, tendances) et me donner 3 objectifs concrets pour la semaine prochaine ?');
+  return L.join('\n');
+}
+
+async function copyBilan() {
+  const txt = buildBilan(), ta = $('#bilanTxt');
+  ta.value = txt; ta.hidden = false;
+  try { await navigator.clipboard.writeText(txt); toast('Bilan copié ✓ Colle-le dans Claude'); }
+  catch (e) {
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); toast('Bilan copié ✓'); } catch (_) { toast('Sélectionne le texte et copie-le'); }
+  }
+}
+
+/* ================= RÉGLAGES ================= */
+function renderSet() {
+  $('#tab-set').innerHTML = `<div class="card"><h2>Programme</h2>
+      <div class="lbl">Date de début</div><input type="date" data-set="start" value="${esc(DB.settings.start)}">
+      <p class="muted">Fin prévue : ${fmtShort(addDays(DB.settings.start, PROGRAM_DAYS - 1))}</p></div>
+    <div class="card"><h2>Sécurité</h2>
+      <button class="btn" data-act="pinchange">🔑 Changer le code PIN</button>
+      <button class="btn" data-act="lock">🔒 Verrouiller maintenant</button>
+      <p class="muted">Verrouillage auto après 1 min en arrière-plan.</p></div>
+    <div class="card"><h2>Sauvegarde</h2>
+      <p class="muted" style="margin-top:0">Tes données restent uniquement sur ce téléphone, rien n'est envoyé en ligne. Si tu vides le cache du navigateur, elles sont perdues : exporte régulièrement.</p>
+      <button class="btn" data-act="export">⬇️ Exporter (JSON)</button>
+      <button class="btn" data-act="import">⬆️ Importer une sauvegarde</button></div>
+    <div class="card"><h2>Zone sensible</h2>
+      <button class="btn danger" data-act="reset">🗑️ Effacer toutes les données</button></div>
+    <p class="muted" style="text-align:center">Suivi Forme · v1</p>`;
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'suivi-forme-' + todayKey() + '.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  toast('Sauvegarde téléchargée ✓');
+}
+$('#importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const o = JSON.parse(r.result);
+      if (!o || typeof o.days !== 'object' || !o.settings) throw 0;
+      if (!confirm('Remplacer les données actuelles par cette sauvegarde ?')) return;
+      const pin = DB.settings.pinHash;
+      DB = o; if (!DB.settings.pinHash) DB.settings.pinHash = pin;
+      saveDB(); renderAll(); toast('Import réussi ✓');
+    } catch (_) { toast('Fichier invalide'); }
+    finally { e.target.value = ''; }
+  };
+  r.readAsText(f);
+});
+function resetAll() {
+  if (!confirm('Effacer TOUTES les données ? Action irréversible.')) return;
+  if (!confirm('Vraiment sûr ? Pense à exporter avant.')) return;
+  DB = defaultDB(); saveDB(); cur = todayKey(); lock();
+}
+
+/* ================= CODE PIN ================= */
+let pinBuf = '', pinMode = 'unlock', pinFirst = '', pinCancelable = false;
+async function hashPin(p) {
+  const s = 'suiviForme:' + p;
+  try {
+    if (window.crypto && crypto.subtle) {
+      const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+      return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
+    }
+  } catch (e) {}
+  let h = 5381; for (const c of s) h = ((h << 5) + h + c.charCodeAt(0)) | 0;
+  return 'd' + h;
+}
+function buildPad() {
+  const extra = pinCancelable ? ['cancel', 'Annuler'] : (pinMode === 'unlock' ? ['forgot', 'Oublié ?'] : ['', '']);
+  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  $('#pad').innerHTML = keys.map(k => `<button data-act="key" data-v="${k}">${k}</button>`).join('') +
+    (extra[0] ? `<button class="sm" data-act="key" data-v="${extra[0]}">${extra[1]}</button>` : '<span></span>') +
+    `<button data-act="key" data-v="0">0</button><button data-act="key" data-v="del" aria-label="Effacer">⌫</button>`;
+}
+function updateLock(msg) {
+  $('#lockMsg').textContent = msg || ({ unlock: 'Entre ton code', setup1: 'Crée ton code à 4 chiffres', setup2: 'Confirme ton code' }[pinMode]);
+  document.querySelectorAll('#dots i').forEach((el, i) => el.classList.toggle('f', i < pinBuf.length));
+}
+function shake() { const d = $('#dots'); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); }
+function lock(changing) {
+  pinCancelable = !!changing;
+  pinMode = (DB.settings.pinHash && !changing) ? 'unlock' : 'setup1';
+  pinBuf = ''; buildPad(); updateLock();
+  $('#lock').classList.add('on');
+}
+function unlocked() { $('#lock').classList.remove('on'); renderAll(); }
+async function pinKey(v) {
+  if (v === 'del') { pinBuf = pinBuf.slice(0, -1); updateLock(); return; }
+  if (v === 'cancel') { $('#lock').classList.remove('on'); return; }
+  if (v === 'forgot') {
+    if (confirm("Code oublié : la seule solution est d'effacer toutes les données de ce téléphone. Continuer ?")) resetAll();
+    return;
+  }
+  if (pinBuf.length >= 4) return;
+  pinBuf += v; updateLock();
+  if (pinBuf.length < 4) return;
+  const entered = pinBuf;
+  await new Promise(r => setTimeout(r, 120));
+  if (pinMode === 'unlock') {
+    if (await hashPin(entered) === DB.settings.pinHash) { pinBuf = ''; unlocked(); }
+    else { shake(); pinBuf = ''; updateLock('Code incorrect'); }
+  } else if (pinMode === 'setup1') {
+    pinFirst = entered; pinMode = 'setup2'; pinBuf = ''; buildPad(); updateLock();
+  } else {
+    if (entered === pinFirst) {
+      DB.settings.pinHash = await hashPin(entered); saveDB();
+      pinBuf = ''; unlocked(); toast('Code enregistré ✓');
+    } else { shake(); pinMode = 'setup1'; pinBuf = ''; buildPad(); updateLock('Codes différents, recommence'); }
+  }
+}
+document.addEventListener('keydown', e => {
+  if (!$('#lock').classList.contains('on')) return;
+  if (/^[0-9]$/.test(e.key)) pinKey(e.key);
+  else if (e.key === 'Backspace') pinKey('del');
+});
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) hiddenAt = Date.now();
+  else if (DB.settings.pinHash && hiddenAt && Date.now() - hiddenAt > 60000 && !$('#lock').classList.contains('on')) lock();
+});
+
+/* ================= NAVIGATION & ÉVÉNEMENTS ================= */
+let tab = 'today';
+function showTab(t) {
+  tab = t;
+  document.querySelectorAll('.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + t));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  renderTab(); window.scrollTo(0, 0);
+}
+function renderTab() {
+  if (tab === 'today') renderToday();
+  else if (tab === 'cal') renderCal();
+  else if (tab === 'stats') renderStats();
+  else renderSet();
+}
+function renderAll() { renderHeader(); renderTab(); }
+
+let toastT;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200); }
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const a = b.dataset.act, p = b.dataset.p;
+  switch (a) {
+    case 'tab': showTab(b.dataset.tab); return;
+    case 'nav': cur = addDays(cur, +b.dataset.v); renderToday(); return;
+    case 'open': cur = b.dataset.k; showTab('today'); return;
+    case 'copy': copyBilan(); return;
+    case 'export': exportJSON(); return;
+    case 'import': $('#importFile').click(); return;
+    case 'reset': resetAll(); return;
+    case 'pinchange': lock(true); return;
+    case 'lock': lock(); return;
+    case 'key': pinKey(b.dataset.v); return;
+    case 'set': {
+      const d = D(), v = parseV(b.dataset.v);
+      setP(d, p, v);
+      if (p.endsWith('.v') && v === true) { const q = p.replace('.v', '.q'); if (!getP(d, q)) setP(d, q, 1); }
+      if (p === 'sport.type') d.sport.min = v === 'Aucun' ? 0 : (d.sport.min || 30);
+      break;
+    }
+    case 'step': {
+      const d = D();
+      let v = (+getP(d, p) || 0) + (+b.dataset.v);
+      v = Math.min(+b.dataset.max, Math.max(+b.dataset.min, v));
+      setP(d, p, Math.round(v * 100) / 100);
+      break;
+    }
+    case 'arr': {
+      const d = D(), arr = getP(d, p), v = b.dataset.v, i = arr.indexOf(v);
+      i < 0 ? arr.push(v) : arr.splice(i, 1);
+      break;
+    }
+    default: return;
+  }
+  saveDB(); renderToday(); renderHeader();
+});
+document.addEventListener('input', e => {
+  const p = e.target.dataset.in; if (!p) return;
+  setP(D(), p, e.target.value); saveDB();
+});
+document.addEventListener('change', e => {
+  if (e.target.dataset.set === 'start' && e.target.value) {
+    DB.settings.start = e.target.value; saveDB(); renderAll(); toast('Date de début mise à jour');
+  }
+});
+
+/* ================= DÉMARRAGE ================= */
+renderHeader();
+lock();
+</script>
+</body>
+</html>
